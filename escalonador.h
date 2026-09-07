@@ -18,4 +18,4 @@ typedef struct Contagem{
     int killed;
 } Contagem;
 
-void simulacao(Tarefa * t, Contagem * cont, int n, int tempo_total, char * escalonador);
+void simulacao(Tarefa * t, Contagem * cont, int n, int tempo_total, char * algoritmo);

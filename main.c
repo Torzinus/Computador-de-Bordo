@@ -27,10 +27,10 @@ int main(int argc, char * argv[]){
         return 1;
     }
     
-    char * modo = argv[1];
+    char * algoritmo = argv[1];
     char * entrada = argv[2];
 
-    if(strcmp(modo, "rate") != 0 && strcmp(modo, "edf") != 0){
+    if(strcmp(algoritmo, "rate") != 0 && strcmp(algoritmo, "edf") != 0){
         fprintf(stderr, "O escalonador deve ser 'rate' ou 'edf'\n");
         return 1;
     }
@@ -48,15 +48,14 @@ int main(int argc, char * argv[]){
 
     abrirArquivo(entrada, &tempo_total, t, &n);
 
-    //só pra testar:
-    printf("Tempo total: %d\n", tempo_total);
-    printf("Qtd de tarefas: %d\n", n);
-    printf("Nome: %s\nPeríodo: %d\nDeadline: %d\nBurst: %d\n", t[0].nome, t[0].periodo, t[0].deadline, t[0].burst);
-    printf("Nome: %s\nPeríodo: %d\nDeadline: %d\nBurst: %d\n", t[1].nome, t[1].periodo, t[1].deadline, t[1].burst);
-
-    //inserir função da simulação aqui embaixo:
+    simulacao(t, cont, n, tempo_total, algoritmo);
+    //mudar essa saída depois:
+    for(int i = 0; i < n; i++){
+        printf("[%s]\nCOMPLETE: %d\nLOST: %d\nKILLED: %d\n\n", t[i].nome, cont[i].complete, cont[i].lost, cont[i].killed);
+    }
 
     free(t);
+    free(cont);
 
     return 0;
 }
