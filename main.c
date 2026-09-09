@@ -10,14 +10,56 @@ int abrirEntrada(char * entrada, int * tempo_total, Tarefa * t, int * n){
         fprintf(stderr, "Falha ao abrir o arquivo %s\n", entrada);
         return 1;
     }
-    
-    //lendo as linhas do arquivo:
-    fscanf(arquivo, "%d", tempo_total);
-    *n = 0;
 
-    while(fscanf(arquivo, "%s %d %d %d", t[*n].nome, &t[*n].periodo, &t[*n].deadline, &t[*n].burst) == 4){
-        (*n)++;
+     if(fscanf(arquivo, "%d", tempo_total) != 1){
+        fprintf(stderr, "Tempo total de simulação ausente ou inválido\n");
+        fclose(arquivo);
+        return 1;
     }
+    if(*tempo_total <= 0){
+        fprintf(stderr, "Tempo total de simulação deve ser positivo\n");
+        fclose(arquivo);
+        return 1;
+    }
+
+    *n = 0;
+    int campos;
+    while((campos = fscanf(arquivo, "%s %d %d %d", t[*n].nome, &t[*n].periodo, &t[*n].deadline, &t[*n].burst)) != EOF){
+        if(campos != 4){
+            fprintf(stderr, "Linha malformada na tarefa de índice %d (campo faltando ou nao númerico)\n", *n + 1);
+            fclose(arquivo);
+            return 1;
+        }
+        if(t[*n].periodo <= 0 || t[*n].deadline <= 0 || t[*n].burst <= 0){
+            fprintf(stderr, "Tarefa %s tem valor não positivo\n", t[*n].nome);
+            fclose(arquivo);
+            return 1;
+        }
+        if(t[*n].deadline > t[*n].periodo){
+            fprintf(stderr, "Tarefa %s viola a especificação: deadline maior que o periodo\n", t[*n].nome);
+            fclose(arquivo);
+            return 1;
+        }
+        if(t[*n].burst > t[*n].deadline){
+            fprintf(stderr, "Tarefa %s viola a especificação: burst maior que o deadline\n", t[*n].nome);
+            fclose(arquivo);
+            return 1;
+        }
+
+        (*n)++;
+        if(*n >= 100){
+            fprintf(stderr, "O número de tarefas excede o limite suportado\n");
+            fclose(arquivo);
+            return 1;
+        }
+    }
+
+    if(*n == 0){
+        fprintf(stderr, "O arquivo de entrada não contém nenhuma tarefa\n");
+        fclose(arquivo);
+        return 1;
+    }
+
     fclose(arquivo);
     return 0;
 }
@@ -51,6 +93,13 @@ int main(int argc, char * argv[]){
     Contagem * cont = malloc(100 * sizeof(Contagem));
     int n;
 
+    if(t == NULL || cont == NULL){
+        fprintf(stderr, "Falha na alocação de memória\n");
+        free(t);
+        free(cont);
+        return 1;
+    }
+
     if (abrirEntrada(entrada, &tempo_total, t, &n) != 0){
         free(t);
         free(cont);
@@ -59,6 +108,15 @@ int main(int argc, char * argv[]){
 
     char (*rodou)[100] = malloc(tempo_total * sizeof(char[100]));
     char * situacao = malloc(tempo_total * sizeof(char));
+
+    if(rodou == NULL || situacao == NULL){
+        fprintf(stderr, "Falha na alocação de memória\n");
+        free(t);
+        free(cont);
+        free(rodou);
+        free(situacao);
+        return 1;
+    }
 
     for(int i = 0; i < n; i++){ //inicializa a contagem para cada tarefa(começando do zero)
         cont[i].complete = 0;
