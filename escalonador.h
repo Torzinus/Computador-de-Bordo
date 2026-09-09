@@ -1,5 +1,7 @@
 #define ESCALONADOR_H
 
+#include <stdio.h>
+
 typedef struct Tarefa{
     char nome[100];
     int periodo;
@@ -18,4 +20,6 @@ typedef struct Contagem{
     int killed;
 } Contagem;
 
-void simulacao(Tarefa * t, Contagem * cont, int n, int tempo_total, char * algoritmo);
+void simulacao(Tarefa * t, Contagem * cont, int n, int tempo_total, char * algoritmo, char rodou[][100], char * situacao);
+void gerarLog(char rodou[][100], int tempo_total, FILE * output, char * situacao);
+void escreverResumo(Tarefa *t, Contagem *cont, int n, FILE *output);

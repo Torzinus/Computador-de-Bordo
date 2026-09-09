@@ -3,12 +3,12 @@
 #include <stdlib.h>
 #include "escalonador.h"
 
-void abrirArquivo(char * entrada, int * tempo_total, Tarefa * t, int * n){
+int abrirEntrada(char * entrada, int * tempo_total, Tarefa * t, int * n){
     //abrindo o arquivo:
     FILE * arquivo = fopen(entrada, "r");
     if(arquivo == NULL){
         fprintf(stderr, "Falha ao abrir o arquivo %s\n", entrada);
-        return;
+        return 1;
     }
     
     //lendo as linhas do arquivo:
@@ -19,6 +19,17 @@ void abrirArquivo(char * entrada, int * tempo_total, Tarefa * t, int * n){
         (*n)++;
     }
     fclose(arquivo);
+    return 0;
+}
+
+FILE * abrirSaida(char * escalonador){
+    FILE * output;
+    if(strcmp(escalonador, "rate") == 0){
+        output = fopen("rate_hcs4.out", "w");
+    } else{
+        output = fopen("edf_hcs4.out", "w");
+    }
+    return output;
 }
 
 int main(int argc, char * argv[]){
@@ -40,22 +51,45 @@ int main(int argc, char * argv[]){
     Contagem * cont = malloc(100 * sizeof(Contagem));
     int n;
 
+    if (abrirEntrada(entrada, &tempo_total, t, &n) != 0){
+        free(t);
+        free(cont);
+        return 1;
+    }
+
+    char (*rodou)[100] = malloc(tempo_total * sizeof(char[100]));
+    char * situacao = malloc(tempo_total * sizeof(char));
+
     for(int i = 0; i < n; i++){ //inicializa a contagem para cada tarefa(começando do zero)
         cont[i].complete = 0;
         cont[i].lost = 0;
         cont[i].killed = 0;
     }
-
-    abrirArquivo(entrada, &tempo_total, t, &n);
-
-    simulacao(t, cont, n, tempo_total, algoritmo);
-    //mudar essa saída depois:
-    for(int i = 0; i < n; i++){
-        printf("[%s]\nCOMPLETE: %d\nLOST: %d\nKILLED: %d\n\n", t[i].nome, cont[i].complete, cont[i].lost, cont[i].killed);
+    
+    FILE * output = abrirSaida(algoritmo);
+    if (output == NULL){
+        free(t);
+        free(cont);
+        free(rodou);
+        free(situacao);
+        return 1;
     }
+    simulacao(t, cont, n, tempo_total, algoritmo, rodou, situacao);
+    
+    if (strcmp(algoritmo, "rate") == 0) {
+        fprintf(output, "EXECUTION BY RATE\n\n");
+    } else {
+    fprintf(output, "EXECUTION BY EDF\n\n");
+    }
+    
+    gerarLog(rodou, tempo_total, output, situacao);
+    escreverResumo(t, cont, n, output);
+    fclose(output);
 
     free(t);
     free(cont);
+    free(rodou);
+    free(situacao);
 
     return 0;
 }
